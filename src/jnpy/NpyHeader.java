@@ -6,6 +6,10 @@ public class NpyHeader {
     
     private static final byte majorVersionNumber = (byte) 0x01;
     private static final byte minorVersionNumber = (byte) 0x00;
+    private static final byte padByte = (byte) 0x20;
+    private static final byte terminationByte = (byte) 0x0a;
+    
+    private NumpyDtype dtype;
     
     private static final byte[] getMagicBytes(){
         byte[] magic = new byte[6];
@@ -28,7 +32,19 @@ public class NpyHeader {
         
         
         return magic;
-    } 
+    }
+
+    public NpyHeader(NumpyDtype dtype, ) {
+        this.dtype=dtype;
+        
+    }
+    
+    private void getDtypeDescription(){
+        return dtype.get_description();
+    }
+            
+    
+    
     
     
     
