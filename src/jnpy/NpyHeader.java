@@ -11,13 +11,13 @@ public class NpyHeader {
     
     private NumpyDtype dtype;
     
-    private static final byte[] getMagicBytes(){
+    private static byte[] getMagicBytes(){
         byte[] magic = new byte[6];
         
         magic[0] = (byte) 0x93;
         
         
-        String s = new String("NUMPY");
+        String s = "NUMPY";
         byte[] numpyBytes;
         try{
             numpyBytes = s.getBytes("UTF-8");
@@ -34,20 +34,12 @@ public class NpyHeader {
         return magic;
     }
 
-    public NpyHeader(NumpyDtype dtype, ) {
-        this.dtype=dtype;
-        
+    public NpyHeader(NumpyDtype dtype) {
+        this.dtype = dtype;
     }
     
-    private void getDtypeDescription(){
-        return dtype.get_description();
+    private byte[] getDtypeDescription(){
+        return dtype.getDescription();
     }
-            
-    
-    
-    
-    
-    
-    
     
 }
