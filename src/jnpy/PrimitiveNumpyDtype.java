@@ -38,16 +38,21 @@ public class PrimitiveNumpyDtype implements NumpyDtype{
     }
 
     @Override
-    public byte[] getDescription() {
+    public String getDescription() {
         String stringDescription = getStringDescription();
-        try {
-        return stringDescription.getBytes("UTF-8");
-        }
-        catch (UnsupportedEncodingException e){
-            throw new RuntimeException("Bad charset, I guess.");
-        }
+        return getStringDescription();
     }
     
+    /**
+     * From the numpy documentation of the __array__ interface:
+     * 
+     * A string providing the basic type of the homogenous array 
+     * The basic string format consists of 3 parts: 
+     * a character describing the byteorder of the data (<: little-endian, >: big-endian, |: not-relevant), 
+     * a character code giving the basic type of the array, 
+     * and an integer providing the number of bytes the type uses.
+     * @return 
+     */
     private String getStringDescription(){
         char typeChar = classToTypeCharMap.get(primitive_class);
         String sizeChar = ((Integer) getItemSize()).toString();
