@@ -34,59 +34,24 @@ import java.nio.ByteOrder;
  */
 public class NpyHeader {
     
-    private static final byte[] magicBytes = getMagicBytes();
-    private static final byte majorVersionNumber = (byte) 0x01;
-    private static final byte minorVersionNumber = (byte) 0x00;
-    private static final byte[] preamble = getHeaderPreamble();
+    private static final byte[] preamble = NpyHeaderPreamble.preamble;
+
     private static final byte padByte = (byte) 0x20;
     private static final byte terminationByte = (byte) 0x0a;
     
     private String dtypeDescription;
+    private int[] arrayShape;
+    
     private byte[] headerCore;
     private byte[] headerCoreLenBytes = new byte[Short.SIZE/8];
     
-    private int[] arraySize;
-    private static String descriptionEncoding = "UTF-8";
-    
-    public static byte[] getBytes(String s){
-        byte[] bytes;
-        try{
-            bytes = s.getBytes(descriptionEncoding);
-        }
-        catch (UnsupportedEncodingException e){
-            throw new RuntimeException("Bad charset, I guess.");
-        }
-        return bytes;
+    private static byte[] encodeToAscii(String s){
+        return NpyEncoder.encodeToAscii(s);
     }
     
-    private static byte[] getMagicBytes(){
-        byte[] magic = new byte[6];
-        
-        magic[0] = (byte) 0x93;
-        
-        
-        String s = "NUMPY";
-        byte[] numpyBytes;
-        numpyBytes = getBytes(s);
-        
-        for (int i=1; i<6; i++){
-            magic[i] = numpyBytes[i-1];
-        }
-        
-        return magic;
-    }
-    
-    private static byte[] getHeaderPreamble(){
-        byte[] tmp_preamble = new byte[magicBytes.length+2];
-        System.arraycopy(magicBytes, 0, tmp_preamble, 0, magicBytes.length);
-        tmp_preamble[magicBytes.length] = majorVersionNumber;
-        tmp_preamble[magicBytes.length+1] = minorVersionNumber;
-        return tmp_preamble;
-    }
-
     public NpyHeader(String dtypeDescription, int[] arraySize) {
         this.dtypeDescription = dtypeDescription;
-        this.arraySize = arraySize;
+        this.arrayShape = arraySize;
         headerCore = getHeaderCore();
         setHeaderCoreLenBytes();
     }
@@ -97,9 +62,7 @@ public class NpyHeader {
         buffer.put(preamble);
         buffer.put(headerCoreLenBytes);
         buffer.put(headerCore);
-        for (int i=0;i<getNumberPaddedBytes();i++){
-            buffer.put(padByte);
-        }
+        padHeader(buffer);
         
         return buffer.array();
     }
@@ -117,7 +80,7 @@ public class NpyHeader {
     }
     
     private byte[] getHeaderCore(){
-        return getBytes(getHeaderCoreLiteral());
+        return encodeToAscii(getHeaderCoreLiteral());
     }
     
     private String getHeaderCoreLiteral(){
@@ -133,8 +96,8 @@ public class NpyHeader {
     private String getArraySizeTupleLiteral(){
         String s = "";
         
-        for (int i=0; i<arraySize.length; i++){
-            s = s + ',' + ((Integer) arraySize[i]).toString();
+        for (int i=0; i<arrayShape.length; i++){
+            s = s + ',' + ((Integer) arrayShape[i]).toString();
         }
         
         s = String.format("(%s)", s); 
@@ -142,17 +105,22 @@ public class NpyHeader {
     }
 
     private void setHeaderCoreLenBytes() {
-        ByteBuffer buffer = ByteBuffer.allocate(Short.SIZE/8);
+        ByteBuffer buffer = ByteBuffer.allocate(headerCoreLenBytes.length);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.putShort((short) headerCore.length);
         
-        headerCoreLenBytes[0] = buffer.get();
-        headerCoreLenBytes[1] = buffer.get();
+        headerCoreLenBytes = buffer.array();
     }
     
     private int computePaddedLength(int occupiedLength) {
         int paddedLength = ((int) Math.ceil(((double) occupiedLength)/16.0))*16;
         return paddedLength;
+    }
+    
+    private void padHeader(ByteBuffer buffer) {
+        for (int i=0;i<getNumberPaddedBytes();i++){
+            buffer.put(padByte);
+        }
     }
     
 }
