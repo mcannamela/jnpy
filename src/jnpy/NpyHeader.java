@@ -1,6 +1,5 @@
 package jnpy;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -79,12 +78,12 @@ public class NpyHeader {
         return getPaddedHeaderLength()-getOccupiedHeaderLength();
     }
     
-    private byte[] getHeaderCore(){
+    byte[] getHeaderCore(){
         return encodeToAscii(getHeaderCoreLiteral());
     }
     
     private String getHeaderCoreLiteral(){
-        String s = String.format("{descr: %s, fortran_order: False, shape: %s}", 
+        String s = String.format("{'descr': '%s', 'fortran_order': False, 'shape': %s,}", 
                 getDtypeDescription(), getArraySizeTupleLiteral());
         return s;
     }
@@ -118,9 +117,10 @@ public class NpyHeader {
     }
     
     private void padHeader(ByteBuffer buffer) {
-        for (int i=0;i<getNumberPaddedBytes();i++){
+        for (int i=0;i<getNumberPaddedBytes()-1;i++){
             buffer.put(padByte);
         }
+         buffer.put(terminationByte);
     }
     
 }
