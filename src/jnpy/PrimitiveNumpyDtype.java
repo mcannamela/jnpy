@@ -1,48 +1,51 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package jnpy;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.HashMap;
-import java.util.HashSet;
 
 public class PrimitiveNumpyDtype implements NumpyDtype{
     
-    private Class primitive_class;
+    private Class primitiveClass;
     
-    //always use big endian
-    private static char endianIndicator = '>';
-    public static ByteOrder endianness = ByteOrder.BIG_ENDIAN;
+    //always use little endian
+    private static char endianIndicator = '<';
+    public static ByteOrder endianness = ByteOrder.LITTLE_ENDIAN;
     private static HashMap<Class, Character> classToTypeCharMap = getClassToTypeCharMap();
     private static HashMap<Class, Integer> classToItemSizeMap = getClassToItemSizeMap();
     
+    
+    public static ByteBuffer allocateByteBuffer(int capacity){
+        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+        buffer.order(endianness);
+        return buffer;
+        
+    }
     private static HashMap<Class, Character> getClassToTypeCharMap(){
-        HashMap<Class, Character> classToTypeCharMap = new HashMap<Class, Character>();
-        classToTypeCharMap.put(Integer.class, 'i');
-        classToTypeCharMap.put(Long.class, 'i');
-        classToTypeCharMap.put(Float.class, 'f');
-        classToTypeCharMap.put(Double.class, 'f');
-        return classToTypeCharMap;
+        HashMap<Class, Character> tmpClassToTypeCharMap = new HashMap<Class, Character>();
+        tmpClassToTypeCharMap.put(Integer.class, 'i');
+        tmpClassToTypeCharMap.put(Long.class, 'i');
+        tmpClassToTypeCharMap.put(Float.class, 'f');
+        tmpClassToTypeCharMap.put(Double.class, 'f');
+        return tmpClassToTypeCharMap;
     }
     
     private static HashMap<Class, Integer> getClassToItemSizeMap(){
-        HashMap<Class, Integer> classToItemSizeMap = new HashMap<Class, Integer>();
-        classToItemSizeMap.put(Integer.class, Integer.SIZE/8);
-        classToItemSizeMap.put(Long.class, Long.SIZE/8);
-        classToItemSizeMap.put(Float.class, Float.SIZE/8);
-        classToItemSizeMap.put(Double.class, Double.SIZE/8);
-        return classToItemSizeMap;
-    }
-
-    @Override
-    public String getDescription() {
-        String stringDescription = getStringDescription();
-        return getStringDescription();
+        HashMap<Class, Integer> tmpClassToItemSizeMap = new HashMap<Class, Integer>();
+        tmpClassToItemSizeMap.put(Integer.class, Integer.SIZE/8);
+        tmpClassToItemSizeMap.put(Long.class, Long.SIZE/8);
+        tmpClassToItemSizeMap.put(Float.class, Float.SIZE/8);
+        tmpClassToItemSizeMap.put(Double.class, Double.SIZE/8);
+        return tmpClassToItemSizeMap;
     }
     
+     public PrimitiveNumpyDtype(Class primitive_class) {
+        this.primitiveClass = primitive_class;
+        if (!isClassValid()){
+            throw new RuntimeException("Unsupported class passed to PrimitiveNumpyDtype constructor.");
+        }
+    }
+
     /**
      * From the numpy documentation of the __array__ interface:
      * 
@@ -53,8 +56,9 @@ public class PrimitiveNumpyDtype implements NumpyDtype{
      * and an integer providing the number of bytes the type uses.
      * @return 
      */
-    private String getStringDescription(){
-        char typeChar = classToTypeCharMap.get(primitive_class);
+    @Override
+    public String getDescription(){
+        char typeChar = classToTypeCharMap.get(primitiveClass);
         String sizeChar = ((Integer) getItemSize()).toString();
         String stringDescription = endianIndicator+typeChar+sizeChar;
         return stringDescription;
@@ -62,26 +66,29 @@ public class PrimitiveNumpyDtype implements NumpyDtype{
 
     @Override
     public int getItemSize() {
-        return classToItemSizeMap.get(primitive_class);
+        return classToItemSizeMap.get(primitiveClass);
     }
-
-    public PrimitiveNumpyDtype(Class primitive_class) {
-        this.primitive_class = primitive_class;
-        if (!isClassValid()){
-            throw new RuntimeException("Unsupported class passed to PrimitiveNumpyDtype constructor.");
+    
+    public void putBytes(ByteBuffer buffer, Object arrayElement){
+        if (primitiveClass==Integer.class){
+            buffer.putInt((Integer) arrayElement);
+        }
+        else if (primitiveClass==Long.class){
+            buffer.putLong((Long) arrayElement);
+        }
+        else if (primitiveClass==Float.class){
+            buffer.putFloat((Float) arrayElement);
+        }
+        else if (primitiveClass==Double.class){
+            buffer.putDouble((Double) arrayElement);
+        }
+        else{
+            throw new RuntimeException("Unsupported operation for this dtype");
         }
     }
     
     private boolean isClassValid(){
-        return classToTypeCharMap.containsKey(primitive_class);
+        return classToTypeCharMap.containsKey(primitiveClass);
     }
-    
-    
-    
-    
-    
-    
-    
-    
     
 }
